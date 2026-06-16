@@ -1,0 +1,21 @@
+# Judge-calibration set. Hand-label pairs you already have an opinion on, then:
+#   python -m modelbench calibrate experiments/labelled.example.yaml --judge openai/gpt-5
+# `better` = the text YOU think wins. High agreement => the judge is usable.
+
+rubric_file: rubric.md
+
+pairs:
+  - better: |
+      凌晨两点,我盯着那行报错:`KeyError: 'price'`。
+      这是我写的第一个跑在生产上的脚本,它在第 4 个用户那里炸了。
+      我没写过测试,代价就是用真实用户当测试。
+    worse: |
+      在 AI 时代,每个人都应该学会用 AI 赋能自己的工作流,
+      通过底层逻辑的重构,实现个人能力的颠覆式跃迁。
+
+  - better: |
+      我把定价从 $19 改到 $29 那天,转化率掉了一半。
+      三天后我才反应过来:贵的不是价格,是我没说清楚它替谁省了什么。
+    worse: |
+      定价是一门艺术,也是一门科学。你需要在价值与成本之间找到平衡点,
+      这考验着每一位创业者的智慧与格局。

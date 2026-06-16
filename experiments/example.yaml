@@ -1,0 +1,41 @@
+# Model comparison: same prompt + cases, many models, judged pairwise.
+# Run: python -m modelbench run experiments/example.yaml
+#
+# To A/B test PROMPT VERSIONS instead, set axis: prompt and list >1 prompt with
+# a single model — the same machinery compares prompt ids per case.
+
+axis: model            # "model" -> compare models | "prompt" -> compare prompt versions
+
+prompts:
+  - id: v1
+    template: |
+      用中文写一段 120 字左右的开头,主题:{{topic}}。
+      要求:从一个具体事件切入,不要用"颠覆/赋能/底层逻辑"这类大词。
+
+models:
+  # 精选主流中美模型。slug 会变 —— 跑前用 `python -m modelbench models <名字>` 核对/修正。
+  # 美国 / 西方
+  - openai/gpt-5
+  - anthropic/claude-opus-4.8
+  - google/gemini-2.5-pro
+  - x-ai/grok-4.3
+  - meta-llama/llama-4-maverick
+  # 中国
+  - deepseek/deepseek-chat
+  - deepseek/deepseek-r1
+  - qwen/qwen3-max
+  - moonshotai/kimi-k2
+  - z-ai/glm-4.6
+
+cases:
+  - id: agent
+    vars: {topic: "我用 AI 写了第一行生产代码"}
+  - id: book
+    vars: {topic: "公开构建一家公司的第一周"}
+
+params:
+  max_tokens: 600
+
+judge:
+  model: anthropic/claude-opus-4.8   # MUST NOT be in `models` for a real run; swap to a non-candidate strong model
+  rubric_file: rubric.md
