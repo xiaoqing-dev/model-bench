@@ -48,6 +48,12 @@ async def test_swap_test_neutralises_position_biased_judge():
     assert v.winner == "tie" and v.consistent is False
 
 
+async def test_empty_judge_reply_is_undecided_not_crash():
+    judge = ScriptedJudge(mode="empty")
+    v = await compare_pair(judge, "judge", RUBRIC, "alpha", "beta")
+    assert v.winner == "tie" and v.consistent is False  # undecided, no exception
+
+
 async def test_judge_case_round_robins_candidates():
     judge = ScriptedJudge(mode="prefer_token", token="GOOD")
     outputs = {"m1": "GOOD answer", "m2": "ok", "m3": "ok"}

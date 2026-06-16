@@ -57,6 +57,8 @@ class ScriptedJudge:
     async def complete(self, model: str, prompt: str, **params) -> Completion:
         self.calls.append((model, prompt))
         resp1, resp2 = _extract_two_responses(prompt)
+        if self.mode == "empty":
+            return Completion(text="")  # judge returned nothing usable
         if self.mode == "always_first":
             winner = "1"
         else:

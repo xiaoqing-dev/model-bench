@@ -22,6 +22,10 @@ from typing import Optional
 
 from .client import Client
 
+# Judges are often reasoning models — give the call enough room that hidden
+# reasoning doesn't eat the whole budget and leave the JSON verdict empty.
+JUDGE_MAX_TOKENS = 4000
+
 _JUDGE_INSTRUCTIONS = """You are a strict, impartial judge comparing two responses to the same task.
 
 Judge ONLY against the rubric below. Do not reward a response for being longer,
@@ -108,9 +112,14 @@ def combine_swap(winner_ab: str, winner_ba: str) -> tuple:
 
 
 async def _ask(client: Client, model: str, rubric: str, resp1: str, resp2: str, **params):
+    """Return (winner, reasoning). winner is "1"/"2"/"tie", or "error" if the
+    judge returned empty/unparseable output — never raises on a bad reply."""
     prompt = _JUDGE_INSTRUCTIONS.format(rubric=rubric, resp1=resp1, resp2=resp2)
     comp = await client.complete(model, prompt, **params)
-    data = _extract_json(comp.text)
+    try:
+        data = _extract_json(comp.text)
+    except ValueError:
+        return "error", (comp.text or "")[:200]
     return _normalize_winner(data.get("winner")), data.get("reasoning", "")
 
 
@@ -122,11 +131,16 @@ async def compare_pair(
     out_b: str,
     **params,
 ) -> Verdict:
-    """Swap-tested comparison of two outputs. Runs both orderings concurrently."""
+    """Swap-tested comparison of two outputs. Runs both orderings concurrently.
+    A judge that returns nothing usable yields an undecided (tie, inconsistent)
+    verdict rather than crashing the whole run."""
+    params.setdefault("max_tokens", JUDGE_MAX_TOKENS)
     (w_ab, r_ab), (w_ba, r_ba) = await asyncio.gather(
         _ask(client, model, rubric, out_a, out_b, **params),
         _ask(client, model, rubric, out_b, out_a, **params),
     )
+    if "error" in (w_ab, w_ba):
+        return Verdict(winner="tie", consistent=False, reasoning_ab=r_ab, reasoning_ba=r_ba)
     winner, consistent = combine_swap(w_ab, w_ba)
     return Verdict(winner=winner, consistent=consistent, reasoning_ab=r_ab, reasoning_ba=r_ba)
 
