@@ -56,6 +56,25 @@ Reports `agreement` (judge vs your labels) and `position_consistency`. If
 agreement < ~80%, fix the rubric or switch judge model — a miscalibrated judge is
 worse than none.
 
+## Deploy (share with others) — Streamlit Community Cloud
+
+Code is already on GitHub. To publish a shareable URL behind a password:
+
+1. Go to **https://share.streamlit.io** and sign in with GitHub.
+2. **Create app** → pick repo `xiaoqing-dev/model-bench`, branch `main`,
+   main file `app.py`.
+3. **Advanced settings → Secrets**, paste (your real values):
+   ```toml
+   OPENROUTER_API_KEY = "sk-or-v1-..."
+   APP_PASSWORD = "choose-a-password"
+   ```
+4. **Deploy.** You get a URL like `https://model-bench.streamlit.app`.
+5. Share the URL **and** the password. Visitors run on your key, gated by the
+   password. Watch spend on the OpenRouter dashboard; rotate `APP_PASSWORD`
+   (and the key) if it leaks.
+
+Updating the live app: push to `main` — Streamlit Cloud redeploys automatically.
+
 ## Layout
 
 ```
