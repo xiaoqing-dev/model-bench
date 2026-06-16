@@ -34,7 +34,9 @@ class Completion:
 
 @runtime_checkable
 class Client(Protocol):
-    async def complete(self, model: str, prompt: str, **params) -> Completion: ...
+    async def complete(
+        self, model: str, prompt: str, *, system: str = "", **params
+    ) -> Completion: ...
 
 
 class OpenRouterClient:
@@ -64,11 +66,17 @@ class OpenRouterClient:
         )
         self.default_params = default_params or {}
 
-    async def complete(self, model: str, prompt: str, **params) -> Completion:
+    async def complete(
+        self, model: str, prompt: str, *, system: str = "", **params
+    ) -> Completion:
         merged = {**self.default_params, **params}
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
         resp = await self._client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             # Ask OpenRouter to include exact $ cost in the usage block.
             extra_body={"usage": {"include": True}},
             **merged,

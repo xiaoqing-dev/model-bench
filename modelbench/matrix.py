@@ -40,7 +40,8 @@ async def run_matrix(
             t0 = time.perf_counter()
             try:
                 rendered = render(p.template, c.vars)
-                comp = await client.complete(m, rendered, **params)
+                rendered_system = render(p.system, c.vars) if p.system else ""
+                comp = await client.complete(m, rendered, system=rendered_system, **params)
                 # Empty content with no exception is the reasoning-model trap:
                 # the response is "successful" but the answer is blank (hidden
                 # reasoning ate the whole max_tokens). Surface it, don't drop it.

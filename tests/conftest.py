@@ -24,8 +24,8 @@ class FakeModelClient:
         self.empty_models = set(empty_models)  # return blank content (reasoning trap)
         self.calls = []
 
-    async def complete(self, model: str, prompt: str, **params) -> Completion:
-        self.calls.append((model, prompt))
+    async def complete(self, model: str, prompt: str, *, system: str = "", **params) -> Completion:
+        self.calls.append((model, prompt, system))
         if model in self.fail_models:
             raise RuntimeError("simulated provider failure")
         if model in self.empty_models:
@@ -54,7 +54,7 @@ class ScriptedJudge:
         self.token = token
         self.calls = []
 
-    async def complete(self, model: str, prompt: str, **params) -> Completion:
+    async def complete(self, model: str, prompt: str, *, system: str = "", **params) -> Completion:
         self.calls.append((model, prompt))
         resp1, resp2 = _extract_two_responses(prompt)
         if self.mode == "empty":
@@ -71,6 +71,27 @@ class ScriptedJudge:
             else:
                 winner = "tie"
         return Completion(text=json.dumps({"reasoning": "scripted", "winner": winner}))
+
+
+class FakeBench:
+    """One client that acts as candidate models AND as the judge, routed by model
+    name — needed for funnel/experiment tests where run_matrix and judge_matrix
+    share a single client. Candidates output "<model>::<prompt>"; the judge picks
+    whichever response contains `token`."""
+
+    def __init__(self, judge_model: str = "judge", token: str = "GOOD"):
+        self.judge_model = judge_model
+        self.token = token
+        self.calls = []
+
+    async def complete(self, model: str, prompt: str, *, system: str = "", **params) -> Completion:
+        self.calls.append((model, prompt, system))
+        if model == self.judge_model:
+            r1, r2 = _extract_two_responses(prompt)
+            in1, in2 = self.token in r1, self.token in r2
+            winner = "1" if in1 and not in2 else "2" if in2 and not in1 else "tie"
+            return Completion(text=json.dumps({"reasoning": "scripted", "winner": winner}))
+        return Completion(text=f"{model}::{prompt}", cost_usd=0.001, finish_reason="stop")
 
 
 def _extract_two_responses(prompt: str):

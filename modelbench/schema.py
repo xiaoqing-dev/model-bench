@@ -15,10 +15,13 @@ from typing import Optional
 
 @dataclass(frozen=True)
 class PromptVersion:
-    """A prompt template. `template` may contain {{var}} placeholders."""
+    """A prompt version. `template` is the user message (may contain {{var}}).
+    `system` is an optional system prompt — this is what you tune when comparing
+    system-prompt variants."""
 
     id: str
     template: str
+    system: str = ""
 
 
 @dataclass(frozen=True)

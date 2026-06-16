@@ -56,3 +56,12 @@ async def test_matrix_missing_var_becomes_error_not_crash():
     assert len(results) == 1
     assert not results[0].ok
     assert "missing" in results[0].error
+
+
+async def test_system_prompt_is_rendered_and_passed():
+    client = FakeModelClient()
+    prompts = [PromptVersion("v1", "hi {{topic}}", system="be warm about {{topic}}")]
+    await run_matrix(prompts, ["m1"], [Case("c1", {"topic": "cats"})], client)
+    model, prompt, system = client.calls[0]
+    assert prompt == "hi cats"
+    assert system == "be warm about cats"
