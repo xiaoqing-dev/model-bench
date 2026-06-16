@@ -38,6 +38,17 @@ async def test_matrix_records_metadata():
     assert r.latency_s is not None and r.latency_s >= 0
 
 
+async def test_empty_output_is_flagged_not_silently_ok():
+    # reasoning-model trap: API "succeeds" but content is blank
+    client = FakeModelClient(empty_models={"m2"})
+    results = await run_matrix(PROMPTS, MODELS, CASES, client)
+    empties = [r for r in results if r.model == "m2"]
+    assert len(empties) == 4
+    assert all(not r.ok for r in empties)  # surfaced as errors, not dropped
+    assert all("max_tokens" in r.error for r in empties)
+    assert all(r.model == "m1" for r in results if r.ok)
+
+
 async def test_matrix_missing_var_becomes_error_not_crash():
     client = FakeModelClient()
     prompts = [PromptVersion("v1", "{{missing}}")]

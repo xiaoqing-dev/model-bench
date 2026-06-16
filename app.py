@@ -104,7 +104,10 @@ def main() -> None:
             type="password",
             help="部署时从服务器密钥自动读取;本地从 .env / 环境变量读取",
         )
-        max_tokens = st.number_input("max_tokens", 64, 8000, 800, step=64)
+        max_tokens = st.number_input(
+            "max_tokens", 256, 32000, 4000, step=256,
+            help="推理模型(GPT-5/Gemini/MiniMax 等)的隐藏思考也算在内,设太低会导致正文为空。建议 ≥4000。",
+        )
         temperature = st.slider("temperature", 0.0, 2.0, 1.0, 0.1)
         concurrency = st.slider("并发数", 1, 16, 8)
         do_judge = st.toggle("跑裁判打分", value=True)

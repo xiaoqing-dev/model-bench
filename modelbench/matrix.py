@@ -41,11 +41,21 @@ async def run_matrix(
             try:
                 rendered = render(p.template, c.vars)
                 comp = await client.complete(m, rendered, **params)
+                # Empty content with no exception is the reasoning-model trap:
+                # the response is "successful" but the answer is blank (hidden
+                # reasoning ate the whole max_tokens). Surface it, don't drop it.
+                error = None
+                if not (comp.text and comp.text.strip()):
+                    if comp.finish_reason == "length":
+                        error = "空输出:max_tokens 被模型推理耗尽,请调高 max_tokens"
+                    else:
+                        error = f"空输出(finish={comp.finish_reason})"
                 return RunResult(
                     prompt_id=p.id,
                     model=m,
                     case_id=c.id,
                     output=comp.text,
+                    error=error,
                     latency_s=time.perf_counter() - t0,
                     prompt_tokens=comp.prompt_tokens,
                     completion_tokens=comp.completion_tokens,

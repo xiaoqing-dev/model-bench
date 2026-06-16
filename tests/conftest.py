@@ -19,19 +19,23 @@ class FakeModelClient:
     can test failure isolation.
     """
 
-    def __init__(self, fail_models=()):
+    def __init__(self, fail_models=(), empty_models=()):
         self.fail_models = set(fail_models)
+        self.empty_models = set(empty_models)  # return blank content (reasoning trap)
         self.calls = []
 
     async def complete(self, model: str, prompt: str, **params) -> Completion:
         self.calls.append((model, prompt))
         if model in self.fail_models:
             raise RuntimeError("simulated provider failure")
+        if model in self.empty_models:
+            return Completion(text="", cost_usd=0.001, finish_reason="length")
         return Completion(
             text=f"{model}::{prompt}",
             prompt_tokens=10,
             completion_tokens=5,
             cost_usd=0.001,
+            finish_reason="stop",
         )
 
 

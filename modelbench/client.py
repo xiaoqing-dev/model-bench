@@ -29,6 +29,7 @@ class Completion:
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
     cost_usd: Optional[float] = None
+    finish_reason: Optional[str] = None
 
 
 @runtime_checkable
@@ -83,7 +84,13 @@ class OpenRouterClient:
             if cost is None:
                 extra = getattr(usage, "model_extra", None) or {}
                 cost = extra.get("cost")
-        return Completion(text=text, prompt_tokens=pt, completion_tokens=ct, cost_usd=cost)
+        return Completion(
+            text=text,
+            prompt_tokens=pt,
+            completion_tokens=ct,
+            cost_usd=cost,
+            finish_reason=getattr(choice, "finish_reason", None),
+        )
 
     async def list_models(self) -> list:
         """Fetch the live model catalog (slugs + pricing). Don't hardcode slugs —
